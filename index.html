@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STL viewer</title>
+    <link rel="stylesheet" href="style.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r126/three.min.js"
+    ></script>
+    <script src="./STLLoader.js"></script>
+    <script src="./OrbitControls.js"></script>
+    <h1> Shoulder Bone </h1>
+    <h2> 3D Viewer</h2>
+    
+  </head>
+  <body>
+    <div id="model" style="width: 50vw; height:50vh"></div>
+    <script>
+      function STL_Viewer(model, elementID) {
+        var elem = document.getElementById(elementID);
+        var camera = new THREE.PerspectiveCamera(100,window.innerWidth / window.innerHeight,1,1000);
+        var renderer = new THREE.WebGLRenderer(
+          {
+            antialias: true,alpha: true,
+          });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        elem.appendChild(renderer.domElement);
+        var scene = new THREE.Scene();
+        scene.add(new THREE.HemisphereLight(0xffffff,0.95));
+        scene.add(new THREE.AmbientLight(0xdadacac));
+        scene.background = new THREE.Color(0xadacac);
+        var light = new THREE.DirectionalLight(0xf5f5f5, 0.5);
+        const radius = 1600;
+        const radials = 4;
+        const circles = 1500;
+        const divisions = 4;
+        const helper = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+        scene.add( helper );
+        new THREE.STLLoader().load(model, function (geometry) {
+          var material = new THREE.MeshPhongMaterial({
+            color:0xffffff,
+            specular: 20,
+            shininess: 100,
+          });
+          var mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+          var middle = new THREE.Vector3();
+          geometry.computeBoundingBox();
+          geometry.boundingBox.getCenter(middle);
+          mesh.geometry.applyMatrix(
+            new THREE.Matrix4().makeTranslation(-middle.x, -middle.y, -middle.z)
+          );
+          window.addEventListener('resize', function () {
+          var width = window.innerWidth;
+          var height = window.innerHeight;
+           renderer.setSize(width, height);
+          mesh.aspect = width / height;
+          mesh.updateProjectionMatrix;
+        })
+        var controls = new THREE.OrbitControls(camera, renderer.domElement);
+          controls.enableDamping = true;
+          controls.dampingFactor = 0.1;
+          controls.enableZoom = true;
+          var largestDimension = Math.max(
+            geometry.boundingBox.max.x,
+            geometry.boundingBox.max.y,
+            geometry.boundingBox.max.z
+          );
+          camera.position.set(0,-110,40);
+          function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.x+=0.01;
+            mesh.rotation.y+=0.01;
+            mesh.rotation.z+=0.01;
+            controls.update();
+            renderer.render(scene, camera);
+          };
+          animate();
+        });
+      }
+      STL_Viewer("Shoulder_Bone.stl", "model");
+    </script>
+  </body>
+</html>
